@@ -44,6 +44,7 @@ typedef struct s_dirs
 typedef struct s_ls
 {
     t_dirs *dirs;
+    t_list *content;
 } t_ls;
 
 t_ls ls;
@@ -130,29 +131,28 @@ void sort_content_asc(t_list **head)
 
     while (tmp)
     {
-        printf("element: %s\n", tmp->content);
+        printf("element: %s\n", (char *)tmp->content);
         tmp = tmp->next;
     }
 
-    /*
-        t_list *a = *head;
-        t_list *b;
-        while (a && a->next)
+    t_list *a = *head;
+    t_list *b;
+    while (a && a->next)
+    {
+        t_list *next = a->next;
+        while (next)
         {
-            t_list *next = a->next;
-            while (next)
+            if (a->content > next->content)
             {
-                if (a->content > next->content)
-                {
-                    char *tmp = next->content;
-                    next->content = a->content;
-                    a->content = tmp;
-                }
-                next = next->next;
+                char *tmp = next->content;
+                next->content = a->content;
+                a->content = tmp;
             }
-            a = a->next;
+            next = next->next;
         }
-    */
+        a = a->next;
+    }
+
     /*
     t_list *i = *head;
     t_list *j = *head;
@@ -267,7 +267,6 @@ void parse(int ac, char **av)
                 add_option(av[i]);
             else
             {
-                // printf("try for %s\n", av[i]);
                 if ((dp = opendir(av[i])) == NULL)
                 {
                     switch (errno)
@@ -280,9 +279,11 @@ void parse(int ac, char **av)
                         break;
                     case ENOTDIR:
                         printf("'%s' is not a directory\n", av[i]);
+                        t_list *new = ft_lstnew(av[i]);
+                        ft_lstadd_back(&ls.content, new);
+                        printf("'%s' added to ls content\n", av[i]);
                         break;
                     }
-                    // exit(EXIT_FAILURE);
                     continue;
                 }
                 else
@@ -338,7 +339,6 @@ void parse(int ac, char **av)
                 //  }
             }
         }
-
         /*
         if (ac == 1)
             dir_to_open = "./";
@@ -388,7 +388,7 @@ void print_dir_content(t_dirs *tmp, int i)
         int k = i;
         while (k--)
             printf("\t");
-        printf("%s\n", tmp_c->content);
+        printf("%s\n", (char *)tmp_c->content);
 
         t_dirs *tmp_sub = tmp->sub_dir;
         if (tmp_sub)
@@ -400,6 +400,76 @@ void print_dir_content(t_dirs *tmp, int i)
                 tmp_sub = tmp_sub->next;
             }
         }
+        tmp_c = tmp_c->next;
+    }
+}
+
+void print_details(char *str, char *parent_path)
+{
+    struct stat mystat;
+
+    char *full_path = (ft_strjoin(parent_path, str));
+    stat(full_path, &mystat);
+
+    printf((S_ISDIR(mystat.st_mode)) ? "d" : "-");
+    printf((mystat.st_mode & S_IRUSR) ? "r" : "-");
+    printf((mystat.st_mode & S_IWUSR) ? "w" : "-");
+    printf((mystat.st_mode & S_IXUSR) ? "x" : "-");
+    printf((mystat.st_mode & S_IRGRP) ? "r" : "-");
+    printf((mystat.st_mode & S_IWGRP) ? "w" : "-");
+    printf((mystat.st_mode & S_IXGRP) ? "x" : "-");
+    printf((mystat.st_mode & S_IROTH) ? "r" : "-");
+    printf((mystat.st_mode & S_IWOTH) ? "w" : "-");
+    printf((mystat.st_mode & S_IXOTH) ? "x" : "-");
+    char *date = ctime(&mystat.st_mtime);
+    // printf("date: %s\n\n", date);
+    char **trimmed_date = ft_split(date, ' ');
+    char *trim = ft_strjoin(ft_add_char(trimmed_date[1], ' '), ft_add_char(trimmed_date[2], ' '));
+    char *trim2 = ft_strjoin(trim, trimmed_date[3]);
+    char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
+    struct passwd *test = getpwuid(mystat.st_uid);
+    struct group *grp = getgrgid(mystat.st_gid);
+    printf(" %ld %s %s %4ld %s %s (%ld)\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, str, mystat.st_blocks / 2);
+}
+
+void print_dir_content_real(t_dirs *tmp, int i)
+{
+    t_list *tmp_c = tmp->content;
+    if ((options & l))
+        printf("total random\n");
+    while (tmp_c)
+    {
+        // if a options
+        char *arg = (char *)tmp_c->content;
+        if (arg[0] == '.' && !(options & a))
+            ;
+        else
+        {
+            if (!(options & l))
+                printf("%s", (char *)tmp_c->content);
+            else
+                print_details(arg, tmp->path);
+        }
+
+        if (arg[0] == '.' && !(options & a))
+            ;
+        else if (tmp_c->next)
+            printf(" ");
+        else
+            printf("\n");
+        // if -R
+        /*
+        t_dirs *tmp_sub = tmp->sub_dir;
+        if (tmp_sub)
+        {
+            while (tmp_sub)
+            {
+                if (tmp_sub->dir_name == tmp_c->content)
+                    print_dir_content(tmp_sub, tmp_sub->lvl);
+                tmp_sub = tmp_sub->next;
+            }
+        }
+        */
         tmp_c = tmp_c->next;
     }
 }
@@ -422,10 +492,40 @@ void debug_print()
         tmp = tmp->next;
     }
 }
+
+void real_print()
+{
+
+    t_dirs *tmp = ls.dirs;
+    t_list *tmp_content = ls.content;
+    printf("-----------------------------------------------------------------\n");
+    if (tmp_content)
+    {
+
+        t_list *tmp = ls.content;
+        while (tmp)
+        {
+            printf("%s\n", (char *)tmp->content);
+            tmp = tmp->next;
+        }
+    }
+    printf("\n");
+    while (tmp)
+    {
+        // print_dir_content_real(tmp, tmp->lvl);
+        //
+        printf("%s:\n", tmp->path);
+        print_dir_content_real(tmp, tmp->lvl);
+        //
+        tmp = tmp->next;
+    }
+}
+
 int main(int ac, char *av[])
 {
     parse(ac, av);
     debug_print();
+    real_print();
     /*
     if (ac != 2)
     {
