@@ -1,20 +1,19 @@
 #include "ls.h"
 
 const char *available_options = "lRart";
-// else if(params.flags & n) //bonus -n
-
-t_dirs *dirnew()
+//// else if(params.flags & n) //bonus -
+t_dirs *dirnew(char *name, char *path)
 {
     t_dirs *new;
-
     new = (t_dirs *)malloc(sizeof(t_dirs));
     if (!new)
         return (NULL);
     new->next = NULL;
     new->sub_dir = NULL;
-    new->path = NULL;
-    new->dir_name = NULL;
+    new->path = ft_strdup(path);
+    new->dir_name = ft_strdup(name);
     new->total_block = 0;
+    new->content = NULL;
     return (new);
 }
 
@@ -62,7 +61,7 @@ t_dirs *dirlast(t_dirs *lst)
     return (lst);
 }
 
-void diradd_back(t_dirs **alst, t_dirs *new)
+t_dirs *diradd_back(t_dirs **alst, t_dirs *new)
 {
     t_dirs *dir;
 
@@ -73,6 +72,7 @@ void diradd_back(t_dirs **alst, t_dirs *new)
         dir = dirlast(*alst);
         dir->next = new;
     }
+    return new;
 }
 
 void add_subdir(t_dirs *curr, char *name, int fromsub);
@@ -146,6 +146,7 @@ void sort_content(t_list *content)
         sort_content_desc(&content, ft_lstsize(content));
 }
 
+/*
 void fill_subdir(t_dirs *curr)
 {
     // printf("\tTEST: %s\n", curr->dir_name);
@@ -211,7 +212,9 @@ void fill_subdir(t_dirs *curr)
     // closedir(dir);
     printf("\n");
 }
+*/
 
+/*
 void add_subdir(t_dirs *curr, char *name, int from_sub)
 {
     t_dirs *newsub = dirnew();
@@ -221,12 +224,12 @@ void add_subdir(t_dirs *curr, char *name, int from_sub)
     diradd_back(&curr->sub_dir, newsub);
     fill_subdir(newsub);
 }
+*/
 
 void parse(int ac, char **av)
 {
-    if (ac == 1)
-        dir_to_open = "./";
-    else
+    // if (ac == 1)
+    //     dir_to_open = "./";
     {
         for (int i = 1; i < ac; i++)
         {
@@ -234,19 +237,18 @@ void parse(int ac, char **av)
                 add_option(av[i]);
             else
             {
+                /*
                 DIR *dp = opendir(av[i]);
                 if (dp == NULL)
                 {
                     switch (errno)
                     {
-                    /*
                     case EACCES:
                         printf("Permission denied\n");
                         break;
                     case ENOENT:
                         printf("Directory does not exist\n");
                         break;
-                    */
                     case ENOTDIR:
                         printf("'%s' is not a directory\n", av[i]);
                         t_list *new = ft_lstnew(av[i]);
@@ -294,6 +296,7 @@ void parse(int ac, char **av)
                     sort_content(new->content);
                 }
                 // closedir(dp);
+                */
             }
         }
     }
@@ -315,12 +318,15 @@ void free_split(char ***split)
 
 void add_details_l(char *str, char *parent_path, t_dirs *dir, t_list **lst)
 {
+    printf("add details l\n");
+    printf("str: %s\n", str);
+    printf("parent_path: %s\n", parent_path);
+    printf("\n");
     struct stat mystat;
 
-    if (parent_path[strlen(parent_path) - 1] != '/')
-        parent_path = ft_strjoin(parent_path, "/");
+    // if (parent_path[strlen(parent_path) - 1] != '/')
+    //     parent_path = ft_strjoin(parent_path, "/");
     char *full_path = (ft_strjoin(parent_path, str));
-
     stat(full_path, &mystat);
 
     char details1[10000];
@@ -443,15 +449,19 @@ void print_dir_content_real(t_dirs *curr_directory, int i)
  */
 void display_dir_args(t_dirs *curr_head_dir)
 {
-    for (t_dirs *tmp = curr_head_dir; tmp != NULL; tmp = tmp->next)
-    {
-        printf("%s:\n", &curr_head_dir->path[2]);
-        print_dir_content_real(curr_head_dir, curr_head_dir->lvl);
-    }
+
+    /*
+        for (t_dirs *tmp = curr_head_dir; tmp != NULL; tmp = tmp->next)
+        {
+            printf("%s:\n", curr_head_dir->path);
+            print_dir_content_real(curr_head_dir, curr_head_dir->lvl);
+        }
+    */
 }
 
 void display_other_args(t_list *curr)
 {
+    // printf("display-others-args\n");
     t_list *buf = 0;
 
     if (curr)
@@ -486,35 +496,203 @@ void display_other_args(t_list *curr)
         print_buffer(buf);
 }
 
-void display()
+void simple_list_display()
 {
-    t_dirs *tmp_dirs = ls.dirs;
-    t_list *tmp_content = ls.content;
 
-    display_other_args(tmp_content);
-    if (tmp_dirs)
+    t_list *tmpc = ls.content;
+    while (tmpc)
+    {
+        printf("content: %s\n", (char *)tmpc->content);
+        tmpc = tmpc->next;
+    }
+}
+
+void simple_dir_display()
+{
+
+    t_dirs *tmpc = ls.dirs;
+    while (tmpc)
+    {
+        printf("dir: %s\n", tmpc->dir_name);
+
+        t_list *tmp = tmpc->content;
+        while (tmp)
+        {
+            t_list *tmp = tmp->content;
+            printf("o\n");
+            // printf("content: %s\n", (char *)tmp->content);
+            tmp = tmp->next;
+        }
+        tmpc = tmpc->next;
+    }
+}
+
+void print_dir()
+{
+    t_dirs *tmp = ls.dirs;
+    t_list *tmpc = ls.content;
+    // printf("%s:\n", str);
+    while (tmpc)
+    {
+        printf("content: %s\n", (char *)tmpc->content);
+        tmpc = tmpc->next;
+    }
+    printf("\n");
+    while (tmp)
+    {
+        printf("name: %s\n", tmp->dir_name);
+        printf("path: %s\n", tmp->path);
+        // if(tmp->next)
+        //     printf("next->name: %s\n", tmp->next->dir_name);
+
+        t_list *tmp_content = tmp->content;
+        while (tmp_content)
+        {
+            printf("content: %s\n", (char *)tmp_content->content);
+            tmp_content = tmp_content->next;
+        }
+        tmp = tmp->next;
         printf("\n");
-    display_dir_args(tmp_dirs);
+    }
+    printf("\n");
+    printf("-----------------\n");
+    t_dirs *aaa = ls.dirs;
+    t_list *bbb = ls.content;
+    display_other_args(bbb);
 }
 
-void free_list(void *content)
+t_dirs *get_dir_w_path(char *path)
 {
-    char *e = (char *)content;
-    ft_strdel(&e);
+    t_dirs *tmp = ls.dirs;
+
+    while (tmp)
+    {
+        if (ft_strcmp(path, tmp->path) == 0)
+            return tmp;
+        tmp = tmp->next;
+    }
+    return NULL;
 }
 
-void clean_struct()
+t_dirs *get_prev_dir(t_dirs *curr)
 {
-    printf("head of ls.content after: %s\n", ls.content->content);
-    // ft_lstclear(&ls.content, &free_list);
+    // printf("On %s\n", curr->dir_name);
+    //  printf("On %s\n", curr->path);
+    char *test = ft_substr(curr->path, 0, strlen(curr->path) - strlen(curr->dir_name) - 1);
+    // printf("On %s\n", test);
+    return get_dir_w_path(test);
+}
+
+void listdir(char *name, int indent, char *from)
+{
+    DIR *dir;
+    struct dirent *entry;
+
+    // printf("name %s\n", name);
+    if (!(dir = opendir(name)))
+        return;
+    else
+    {
+        char path[1024];
+        snprintf(path, sizeof(path), "./%s", name);
+        if (!ls.dirs)
+        {
+            diradd_back(&ls.dirs, dirnew(name, path));
+        }
+    }
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (entry->d_type == DT_DIR)
+        {
+            char path[1024];
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+                continue;
+
+            if (name[0] == '.' && name[1] == '/')
+                snprintf(path, sizeof(path), "%s/%s", name, entry->d_name);
+            else
+                snprintf(path, sizeof(path), "./%s/%s", name, entry->d_name);
+            // printf("path %s\n", path);
+            diradd_back(&ls.dirs, dirnew(entry->d_name, path));
+
+            t_dirs *curr = get_dir_w_path(path);
+            if (ft_strcmp("main", from) == 0)
+            {
+                // printf("add %s to %s in content\n", entry->d_name, name);
+                //  ft_lstadd_back(&ls.content, ft_lstnew(ft_strdup(entry->d_name)));
+                ft_lstadd_back(&ls.dirs->content, ft_lstnew(ft_strdup(entry->d_name)));
+            }
+            else if (curr)
+            {
+                t_dirs *prev = get_prev_dir(curr);
+                if (prev)
+                {
+                    // printf("we are in %s adding %s as content to %s\n", curr->dir_name, entry->d_name, prev->dir_name);
+                    ft_lstadd_back(&prev->content, ft_lstnew(ft_strdup(entry->d_name)));
+                }
+            }
+            // printf("%*s[%s]\n", indent, "", entry->d_name);
+            listdir(path, indent + 2, "NULL");
+        }
+        else
+        {
+            char path[1024];
+            snprintf(path, sizeof(path), "%s", name);
+
+            // printf("%s: - %s\n", path, entry->d_name);
+            t_dirs *curr = get_dir_w_path(path);
+
+            if (ft_strcmp("main", from) == 0)
+            {
+                ft_lstadd_back(&ls.dirs->content, ft_lstnew(ft_strdup(entry->d_name)));
+                // ft_lstadd_back(&ls.content, ft_lstnew(ft_strdup(entry->d_name)));
+            }
+            else if (curr)
+                ft_lstadd_back(&curr->content, ft_lstnew(ft_strdup(entry->d_name)));
+        }
+    }
+    closedir(dir);
+}
+
+void add_dot_folders()
+{
+    t_dirs *tmp = ls.dirs;
+
+    while (tmp)
+    {
+        ft_lstadd_back(&tmp->content, ft_lstnew(ft_strdup(".")));
+        ft_lstadd_back(&tmp->content, ft_lstnew(ft_strdup("..")));
+        tmp = tmp->next;
+    }
+    if (!tmp)
+    {
+        // ft_lstadd_back(&ls.content, ft_lstnew(ft_strdup(".")));
+        // ft_lstadd_back(&ls.content, ft_lstnew(ft_strdup("..")));
+    }
 }
 
 int main(int ac, char *av[])
 {
-    parse(ac, av);
-    printf("-----------------------------------------------------------------\n");
-    printf("head of ls.content before: %s\n", ls.content->content);
-    //  debug_print();
-    display();
-    clean_struct();
+    if (ac == 1)
+    {
+        listdir("./", 0, "main");
+        add_dot_folders();
+        print_dir(av[0]);
+        return 0;
+    }
+    else
+    {
+        for (int i = 1; i < ac; i++)
+        {
+            if (av[i][0] == '-')
+                add_option(av[i]);
+            else
+            {
+                listdir(av[i], 0, "main");
+                add_dot_folders();
+            }
+        }
+    }
+    print_dir();
+    return 0;
 }

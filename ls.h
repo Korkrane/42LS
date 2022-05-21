@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LS_H
+#define LS_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#include "./libft/libft.h"
 #include "./libft/libft.h"
 
 typedef enum e_options
@@ -51,3 +51,5 @@ t_list *dirs;
 t_ls ls;
 
 void debug_print();
+
+#endif
