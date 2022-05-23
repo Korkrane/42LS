@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -11,6 +12,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
+#include <stdbool.h>
 #include "./libft/libft.h"
 
 typedef enum e_options
@@ -22,11 +24,19 @@ typedef enum e_options
     t = 1 << 4
 } t_options;
 
+typedef struct s_display
+{
+    char *location;
+    char *total_line;
+    t_list *content;
+} t_display;
+
 typedef struct s_dirs
 {
     char *dir_name;
     char *path;
     t_list *content;
+    t_display *display;
     int lvl;
     int total_block; // total for ls -l
     int size;        // for padding
