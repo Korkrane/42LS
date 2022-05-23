@@ -36,6 +36,9 @@ typedef struct s_dirs
 
 typedef struct s_ls
 {
+    t_list *buffers;
+    t_list *opts;
+    t_list *args;
     t_dirs *dirs;
     t_list *content;
 } t_ls;
