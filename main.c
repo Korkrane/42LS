@@ -298,89 +298,14 @@ void free_split(char ***split)
     *split = NULL;
 }
 
-void add_details_l(char *str, char *parent_path, t_dirs *dir, t_list **lst)
-{
-    printf("add details l\n");
-    printf("str: %s\n", str);
-    printf("parent_path: %s\n", parent_path);
-    printf("\n");
-    struct stat mystat;
-
-    // if (parent_path[strlen(parent_path) - 1] != '/')
-    //     parent_path = ft_strjoin(parent_path, "/");
-    char *full_path = (ft_strjoin(parent_path, str));
-    stat(full_path, &mystat);
-
-    char details1[10000];
-    sprintf(details1, "%s%s%s%s%s%s%s%s%s%s",
-            (S_ISDIR(mystat.st_mode)) ? "d" : "-",
-            (mystat.st_mode & S_IRUSR) ? "r" : "-",
-            (mystat.st_mode & S_IWUSR) ? "w" : "-",
-            (mystat.st_mode & S_IXUSR) ? "x" : "-",
-            (mystat.st_mode & S_IRGRP) ? "r" : "-",
-            (mystat.st_mode & S_IWGRP) ? "w" : "-",
-            (mystat.st_mode & S_IXGRP) ? "x" : "-",
-            (mystat.st_mode & S_IROTH) ? "r" : "-",
-            (mystat.st_mode & S_IWOTH) ? "w" : "-",
-            (mystat.st_mode & S_IXOTH) ? "x" : "-");
-    t_list *new1 = ft_lstnew(details1);
-    ft_lstadd_back(lst, new1);
-
-    char *date = ctime(&mystat.st_mtime);
-    char **trimmed_date = ft_split(date, ' ');
-    char *str1 = ft_add_char(ft_strdup(trimmed_date[1]), ' ');
-    char *str2 = ft_add_char(ft_strdup(trimmed_date[2]), ' ');
-    char *trim = ft_strjoin(str1, str2);
-    free(str1);
-    free(str2);
-    char *trim2 = ft_strjoin(trim, trimmed_date[3]);
-    free(trim);
-    free_split(&trimmed_date);
-    char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
-    free(trim2);
-    struct passwd *test = getpwuid(mystat.st_uid);
-    struct group *grp = getgrgid(mystat.st_gid);
-
-    char details[10000];
-    sprintf(details, " %ld %s %s %4ld %s %s\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, str);
-    t_list *new = ft_lstnew(ft_strdup(details));
-    ft_lstadd_back(lst, new);
-
-    dir->total_block += mystat.st_blocks / 2;
-    free(full_path);
-    free(u);
-}
-
-/**
- * @brief print the content of a linked-list as char *
- *
- * @param lst
- */
-void print_list_str(t_list *lst)
-{
-    if (lst)
-        for (t_list *tmp = lst; tmp != NULL; tmp = tmp->next)
-            printf("%s", (char *)tmp->content);
-}
-
 // function to insert a Node at required position
 void insertPos(t_list **current, int pos, t_list *data)
 {
-    // This condition to check whether the
-    // position given is valid or not.
-    // if (pos < 1 || pos > size + 1)
-    ;
-    //    cout << "Invalid position!" << endl;
-    // else
-    //{
-
     // Keep looping until the pos is zero
     while (pos--)
     {
-
         if (pos == 0)
         {
-
             // adding t_list at required position
             t_list *temp = ft_lstnew(data);
 
@@ -397,26 +322,18 @@ void insertPos(t_list **current, int pos, t_list *data)
             // pointer pointing to the address of next t_list
             current = &(*current)->next;
     }
-    // size++;
-    //}
 }
 
 bool find_in_args(t_dirs *lst)
 {
     char *name = 0;
     if (lst)
-    {
         name = lst->dir_name;
-        // printf("dir:%s\n", name);
-    }
     t_list *tmp = ls.args;
     while (tmp)
     {
         if (ft_strcmp((char *)tmp->content, name) == 0)
-        {
-            // printf("found :%s in ls.args\n", name);
             return true;
-        }
         tmp = tmp->next;
     }
     return false;
@@ -432,12 +349,7 @@ void display()
 
             if (!(options & l))
             {
-                // if (tmp->type == DT_DIR)
-                //     printf("\033[0;34m");
-                // else
-                //     ;
                 printf("%s", (char *)tmp->content);
-                // printf("\033[0m");
                 tmp->next ? printf(" ") : printf("\n");
             }
             else
@@ -502,8 +414,6 @@ void display()
                     color = COLOR_BOLD_GREEN;
                 char *restc = COLOR_RESET;
                 char details[10000];
-                // sprintf(details, " %ld %s %s %4ld %s %s\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, (char *)tmp->content);
-
                 if (buf)
                 {
                     sprintf(details, " %ld %s %s %4ld %s %s%s%s -> %s%.*s%s\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, color, (char *)tmp->content, restc, color, (int)nbytes, buf, restc);
@@ -549,7 +459,7 @@ void display()
                         // else if (ft_strcmp("\n", (char *)arg_to_display->content) == 0 && !arg_to_display->next && tmp->next && !find_in_args(tmp->next))
                         //    ;
                         // else if (ft_strcmp("\n", (char *)arg_to_display->content) == 0 && i > j)
-                        //   ;
+                        //    ;
                         else
                             printf("%s", (char *)arg_to_display->content);
                         arg_to_display = arg_to_display->next;
@@ -599,12 +509,11 @@ void output_to_buff()
         char *str = ft_strjoin(&dir->path[2], ":\n");
 
         dir->display->location = str;
-        dir->display->content = ft_lstnew(ft_strdup("init\n")); // TODO
+        dir->display->content = ft_lstnew(ft_strdup("init\n"));
         dir->display->total_line = NULL;
 
         t_list *tmp = dir->content;
         int padding = max_padding(tmp, dir->path);
-        // printf("padding: %d\n",padding);
         while (tmp)
         {
             char *arg = (char *)tmp->content;
@@ -768,11 +677,6 @@ void listdir(char *name, char *from)
             printf("ls: cannot access '%s': %s\n", name, strerror(errno));
             break;
         case ENOTDIR:
-
-            // stat(name, &mystat);
-            // if(S_ISREG(mystat.st_mode))
-            //     printf("mode: %d\n", mystat.st_mode & S_IFMT);
-            // else if (S_ISREG(mystat.st_mode))
             ft_lstadd_back2(&ls.content, ft_lstnew2(name, DT_DIR));
             break;
         }
@@ -895,11 +799,6 @@ void store_params(int ac, char **av)
         i++;
     }
 
-    // printf("--- ARGS ----\n");
-    // print_list_str(ls.args);
-    // printf("\n--- OPTS ---\n");
-    // print_list_str(ls.opts);
-
     if (ft_lstsize(ls.args) == 0)
         ft_lstadd_back(&ls.args, ft_lstnew(ft_strdup("./")));
 }
@@ -947,17 +846,11 @@ void ft_dirclear(t_dirs **lst, void (*del)(void *))
 
 int main(int ac, char *av[])
 {
-    tot = ac;
     store_params(ac, av);
-    // printf("\n");
     for (t_list *tmp = ls.opts; tmp != NULL; tmp = tmp->next)
         add_option(tmp->content);
     for (t_list *tmp = ls.args; tmp != NULL; tmp = tmp->next)
-    {
-        // printf("go to listdir with:%s\n\n", (char *)tmp->content);
         listdir(tmp->content, "main");
-        // printf("\n");
-    }
     add_dot_folders();
     /*
     t_dirs *tr = ls.dirs;
@@ -993,7 +886,6 @@ int main(int ac, char *av[])
     t_dirs *tmp = ls.dirs;
     while (tmp)
     {
-
         if (tmp->display)
         {
             while (tmp->display->content)
