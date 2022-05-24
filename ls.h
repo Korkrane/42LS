@@ -34,7 +34,7 @@ typedef struct s_display
 typedef struct s_list2
 {
     void *content;
-    void *type;
+    unsigned char type;
     struct s_list2 *next;
 } t_list2;
 
@@ -57,20 +57,14 @@ typedef struct s_ls
     t_list *opts;
     t_list *args;
     t_dirs *dirs;
-    t_list *content;
+    t_list2 *content;
 } t_ls;
 
-DIR *dp;
-struct dirent *dirp;
-char *dir_to_open;
-
-int tot;
-int options;
-t_list *args;
-t_list *dirs;
-
-t_ls ls;
 
 void debug_print();
 
+void ft_lstclear2(t_list2 **lst, void (*del)(void *));
+void ft_lstadd_back2(t_list2 **alst, t_list2 *new);
+t_list2 *ft_lstlast2(t_list2 *lst);
+t_list2 *ft_lstnew2(void *content, unsigned char type);
 #endif
