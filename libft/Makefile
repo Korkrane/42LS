@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: clorin <clorin@student.42.fr>              +#+  +:+       +#+         #
+#    By: bahaas <bahaas@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/09/15 14:40:58 by clorin            #+#    #+#              #
-#    Updated: 2020/11/30 19:10:25 by clorin           ###   ########.fr        #
+#    Updated: 2022/05/24 10:47:54 by bahaas           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,7 +33,8 @@ SRCS		= ft_memset.c ft_bzero.c ft_memcpy.c ft_memccpy.c ft_memmove.c ft_memchr.c
 			ft_memdup.c ft_putnbr.c ft_putendl.c ft_strequ.c ft_strnequ.c ft_strdel.c \
 			ft_strclr.c ft_striter.c ft_striteri.c ft_strmap.c ft_lstsplit.c \
 			get_next_line.c get_next_line_utils.c ft_intlen.c ft_nsplit.c ft_add_char.c \
-			ft_add_str.c ft_is_nbr.c ft_is_empty.c
+			ft_add_str.c ft_is_nbr.c ft_is_empty.c \
+			ft_strlower.c ft_strupper.c
 
 OBJS		= ${SRCS:.c=.o}
 
@@ -45,14 +46,14 @@ all:		${NAME}
 
 $(NAME):	${OBJS}
 			@echo "\n----------- \033[32mTerminé\033[0m -----------"
-			
+
 			@ar rc ${NAME} ${OBJS}
 			@echo "\033[0m\nCréation de la librairie ...libft \033[32mok\033[0m"
 			@ranlib ${NAME}
 			@echo "Optimisation ... \033[32mok\033[0m"
 			@echo "\033[1;31;40m -------------- TERMINÉ ---------------\033[0m"
 
-clean:	
+clean:
 			@rm -f ${OBJS}
 			@echo "\n\033[32m"
 			@echo " ██████ ██      ███████  █████  ███    ██"
@@ -65,6 +66,5 @@ clean:
 fclean:		clean
 			@rm -f ${NAME}
 			@echo "\033[0mSuppression "${NAME}" ... \033[32mok\033[0m"
-			
-re:			fclean	all
 
+re:			fclean	all

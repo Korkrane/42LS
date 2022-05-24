@@ -31,6 +31,13 @@ typedef struct s_display
     t_list *content;
 } t_display;
 
+typedef struct s_list2
+{
+    void *content;
+    void *type;
+    struct s_list2 *next;
+} t_list2;
+
 typedef struct s_dirs
 {
     char *dir_name;
@@ -57,6 +64,7 @@ DIR *dp;
 struct dirent *dirp;
 char *dir_to_open;
 
+int tot;
 int options;
 t_list *args;
 t_list *dirs;

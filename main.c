@@ -76,6 +76,16 @@ t_dirs *diradd_back(t_dirs **alst, t_dirs *new)
     return new;
 }
 
+char *calc_str(char *str)
+{
+    char *lower1;
+    if (str[0] == '.' && ft_strlen(str) > 1 && str[1] && str[1] != '.')
+        lower1 = ft_strlower(&str[1]);
+    else
+        lower1 = ft_strlower(str);
+    return lower1;
+}
+
 // Function to insert a given node at its correct sorted position into a given
 // list sorted in increasing order
 void sortedInsert(t_list **head, t_list *newNode)
@@ -86,13 +96,49 @@ void sortedInsert(t_list **head, t_list *newNode)
 
     if (!(options & r))
     {
-        while (current->next != NULL && ft_strcmp((char *)current->next->content, (char *)newNode->content) < 0)
-            current = current->next;
+        char *lower1 = NULL;
+        char *lower2 = NULL;
+
+        while (current->next != NULL)
+        {
+            lower1 = calc_str((char *)current->next->content);
+            lower2 = calc_str((char *)newNode->content);
+            if (ft_strcmp(lower1, lower2) < 0)
+            {
+                 free(lower1);
+                 free(lower2);
+                 current = current->next;
+            }
+            else
+            {
+                free(lower1);
+                free(lower2);
+                break;
+            }
+        }
     }
     else
     {
-        while (current->next != NULL && ft_strcmp((char *)current->next->content, (char *)newNode->content) > 0)
-            current = current->next;
+        char *lower1 = NULL;
+        char *lower2 = NULL;
+
+        while (current->next != NULL)
+        {
+            lower1 = calc_str((char *)current->next->content);
+            lower2 = calc_str((char *)newNode->content);
+            if (ft_strcmp(lower1, lower2) > 0)
+            {
+                free(lower1);
+                free(lower2);
+                current = current->next;
+            }
+            else
+            {
+                free(lower1);
+                free(lower2);
+                break;
+            }
+        }
     }
     newNode->next = current->next;
     current->next = newNode;
@@ -335,13 +381,16 @@ bool find_in_args(t_dirs *lst)
     if (lst)
     {
         name = lst->dir_name;
-        // printf("dir:%s\n", name);
+        //printf("dir:%s\n", name);
     }
     t_list *tmp = ls.args;
     while (tmp)
     {
         if (ft_strcmp((char *)tmp->content, name) == 0)
+        {
+           // printf("found :%s in ls.args\n", name);
             return true;
+        }
         tmp = tmp->next;
     }
     return false;
@@ -402,37 +451,21 @@ void display()
         printf("\n");
     }
 
-    /*
-        if (ls.buffers)
-        {
-            for (t_list *tmp = ls.buffers; tmp != NULL; tmp = tmp->next)
-            {
-                // printf("--start buff--\n");
-                for (t_list *tmp2 = tmp->content; tmp2 != NULL; tmp2 = tmp2->next)
-                {
-                    // for (t_list *tmp3 = tmp2->content; tmp3 != NULL; tmp3 = tmp3->next)
-                    // {
-                    //     //printf("|");
-                    //     //printf("%s", (char *)tmp3->content);
-                    // }
-                    // printf("|");
-                    printf("%s", (char *)tmp2->content);
-                }
-                // printf("|");
-                // printf("%s", (char *)tmp->content);
-                // printf("--end buff--\n");
-            }
-        }
-        */
     if (ls.dirs)
     {
         t_dirs *tmp = ls.dirs;
+
+        int j = 0;
+        int i = 0;
         while (tmp)
         {
-            // printf("ls.dirs.name: %s\n", tmp->dir_name);
-            // printf("ls.args size: %d\n", ft_lstsize(ls.args));
+            //printf("ls.dirs.name: %s\n", tmp->dir_name);
+            //printf("ls.args size: %d\n", ft_lstsize(ls.args));
             if (find_in_args(tmp) || (options & R))
             {
+                j++;
+                //printf("i: %d\n", i);
+                //printf("j: %d\n", j);
                 if (tmp->display)
                 {
                     t_list *arg_to_display = tmp->display->content;
@@ -445,16 +478,46 @@ void display()
                     {
                         if (ft_strcmp("init\n", (char *)arg_to_display->content) == 0)
                             ;
+                        // else if (ft_strcmp("\n", (char *)arg_to_display->content) == 0 && !arg_to_display->next && tmp->next && !find_in_args(tmp->next))
+                        //    ;
+                        //else if (ft_strcmp("\n", (char *)arg_to_display->content) == 0 && i > j)
+                        //   ;
                         else
                             printf("%s", (char *)arg_to_display->content);
                         arg_to_display = arg_to_display->next;
                     }
                 }
             }
-
+            i++;
             tmp = tmp->next;
         }
     }
+}
+
+int max_padding(t_list *t, char *path)
+{
+    t_list *tmp = t;
+    int max = 0;
+    while(tmp)
+    {
+        char *arg = (char *)tmp->content;
+        if (arg[0] == '.' && !(options & a))
+        {
+            tmp = tmp->next;
+            continue;
+        }
+        char *init_path = ft_strjoin(path, "/");
+        char *full_path = ft_strjoin(init_path, arg);
+        free(init_path);
+        struct stat mystat;
+
+        stat(full_path, &mystat);
+        if (max < ft_intlen(mystat.st_size))
+            max = ft_intlen(mystat.st_size);
+        free(full_path);
+        tmp = tmp->next;
+    }
+    return max;
 }
 
 void output_to_buff()
@@ -464,35 +527,31 @@ void output_to_buff()
     while (dir)
     {
         insertSort(&dir->content);
-
-        // printf("dir:%s\n", dir->dir_name);
         dir->display = malloc(sizeof(t_display) * 1);
         char *str = ft_strjoin(&dir->path[2], ":\n");
 
         dir->display->location = str;
-        dir->display->content = ft_lstnew("init\n"); // TODO
+        dir->display->content = ft_lstnew(ft_strdup("init\n")); // TODO
         dir->display->total_line = NULL;
 
         t_list *tmp = dir->content;
+        int padding = max_padding(tmp, dir->path);
+        //printf("padding: %d\n",padding);
         while (tmp)
         {
             char *arg = (char *)tmp->content;
-            // printf("arg:%s\n", arg);
-
             if (arg[0] == '.' && !(options & a))
                 ;
             else
             {
-
                 if (!(options & l))
                 {
-
-                    ft_lstadd_back(&dir->display->content, ft_lstnew(arg));
+                    ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(arg)));
 
                     if (tmp->next)
-                        ft_lstadd_back(&dir->display->content, ft_lstnew(" "));
+                        ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(" ")));
                     else
-                        ft_lstadd_back(&dir->display->content, ft_lstnew("\n"));
+                        ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
                 }
                 else
                 {
@@ -532,7 +591,7 @@ void output_to_buff()
                     struct group *grp = getgrgid(mystat.st_gid);
 
                     char details[10000];
-                    sprintf(details, " %ld %s %s %4ld %s %s\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, arg);
+                    sprintf(details, " %ld %s %s %*ld %s %s\n", mystat.st_nlink, test->pw_name, grp->gr_name, padding,mystat.st_size, u, arg);
                     char *full_string = ft_strjoin(details1, details);
                     ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(full_string)));
                     free(full_string);
@@ -549,7 +608,7 @@ void output_to_buff()
         if (!tmp)
         {
             if (dir->next)
-                ft_lstadd_back(&dir->display->content, ft_lstnew("\n"));
+                ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
 
             if ((options & l))
             {
@@ -558,178 +617,11 @@ void output_to_buff()
                 char *join = ft_strjoin("total ", qwe);
                 dir->display->total_line = strdup(join);
 
-                // t_list *total = ft_lstnew(ft_strdup(join));
                 free(qwe);
                 free(itoa);
                 free(join);
             }
         }
-        // if (!(options & R))
-        //     break;
-        /*
-        printf("lstsize +1 (name)\n");
-
-
-        t_list *dirbuff = 0;
-        t_list *buff1 = 0;
-        if (ft_lstsize(ls.args) >= 1 || (options & R))
-        {
-            // printf("lstsize +1 (name)\n");
-            ft_lstadd_back(&buff1, ft_lstnew(ft_strjoin(&dir->path[2], ":\n")));
-            ft_lstadd_back(&dirbuff, ft_lstnew(buff1));
-        }
-        int i = 0;
-
-        t_list *tmp = dir->content;
-        while (tmp)
-        {
-
-            char *arg = (char *)tmp->content;
-            t_list *buff = 0;
-            if (arg[0] == '.' && !(options & a))
-                ;
-            else
-            {
-                if (!(options & l))
-                {
-                    ft_lstadd_back(&buff, ft_lstnew(arg));
-                    if (tmp->next)
-                        ft_lstadd_back(&buff, ft_lstnew(" "));
-                    else
-                        ft_lstadd_back(&buff, ft_lstnew("\n"));
-                }
-                else
-                {
-
-                    char *init_path = ft_strjoin(dir->path, "/");
-                    char *full_path = ft_strjoin(init_path, arg);
-
-                    struct stat mystat;
-
-                    stat(full_path, &mystat);
-                    char details1[10000];
-                    sprintf(details1, "%s%s%s%s%s%s%s%s%s%s",
-                            (S_ISDIR(mystat.st_mode)) ? "d" : "-",
-                            (mystat.st_mode & S_IRUSR) ? "r" : "-",
-                            (mystat.st_mode & S_IWUSR) ? "w" : "-",
-                            (mystat.st_mode & S_IXUSR) ? "x" : "-",
-                            (mystat.st_mode & S_IRGRP) ? "r" : "-",
-                            (mystat.st_mode & S_IWGRP) ? "w" : "-",
-                            (mystat.st_mode & S_IXGRP) ? "x" : "-",
-                            (mystat.st_mode & S_IROTH) ? "r" : "-",
-                            (mystat.st_mode & S_IWOTH) ? "w" : "-",
-                            (mystat.st_mode & S_IXOTH) ? "x" : "-");
-                    t_list *new1 = ft_lstnew(details1);
-                    ft_lstadd_back(&buff, new1);
-
-                    char *date = ctime(&mystat.st_mtime);
-                    char **trimmed_date = ft_split(date, ' ');
-                    char *str1 = ft_add_char(ft_strdup(trimmed_date[1]), ' ');
-                    char *str2 = ft_add_char(ft_strdup(trimmed_date[2]), ' ');
-                    char *trim = ft_strjoin(str1, str2);
-                    free(str1);
-                    free(str2);
-                    char *trim2 = ft_strjoin(trim, trimmed_date[3]);
-                    free(trim);
-                    free_split(&trimmed_date);
-                    char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
-                    free(trim2);
-                    struct passwd *test = getpwuid(mystat.st_uid);
-                    struct group *grp = getgrgid(mystat.st_gid);
-
-                    char details[10000];
-                    sprintf(details, " %ld %s %s %4ld %s %s\n", mystat.st_nlink, test->pw_name, grp->gr_name, mystat.st_size, u, arg);
-                    t_list *new = ft_lstnew(ft_strdup(details));
-                    ft_lstadd_back(&buff, new);
-
-                    dir->total_block += mystat.st_blocks / 2;
-                    free(full_path);
-                    free(u);
-
-                    // ft_lstadd_back(&buff, ft_lstnew(ft_strjoin(arg, "\n")));
-                }
-            }
-            int len;
-            for (t_list *tmp = buff; tmp != NULL; tmp = tmp->next)
-                len += strlen(tmp->content);
-            char *str = ft_strnew(len);
-            for (t_list *tmp = buff; tmp != NULL; tmp = tmp->next)
-            {
-                str = ft_strjoin(str, (char *)tmp->content);
-                i++;
-            }
-            // printf("strlen:%d\n", len);
-            // printf("str:%s\n", str);
-
-            // t_list *front_buff = buff->content;
-
-            // print_list_str(buff);
-
-            // ft_lstadd_back(&ls.buffers, ft_lstnew(buff));
-            // printf("lstsize +1 (buff)\n");
-            ft_lstadd_back(&dirbuff, ft_lstnew(buff));
-
-            tmp = tmp->next;
-        }
-        // printf("i %d\n", i);
-        if (!tmp)
-        {
-            if (dir->next && (options & R))
-            {
-                // printf("lstsize +1 (\\n)\n");
-                t_list *space = ft_lstnew("\n");
-                ft_lstadd_back(&dirbuff, ft_lstnew(space));
-            }
-            // lse if (!dir->next)
-            //{
-            //    ft_lstadd_back(&dirbuff, ft_lstnew(""));
-            //}
-
-            if ((options & l))
-            {
-                char *itoa = ft_itoa(dir->total_block);
-                char *dir = ft_strjoin(itoa, "\n");
-                char *join = ft_strjoin("total ", dir);
-                // ft_lstadd_front(&dirbuff, ft_lstnew(ft_strdup(join)));
-                // ft_lstadd_front(&dirbuff, ft_lstnew(ft_strdup(join)));
-                // printf(" add: %s on pos:%d\n", join, ft_lstsize(dirbuff) - i / 2);
-                t_list *total = ft_lstnew(ft_strdup(join));
-                // if (ft_lstsize(dirbuff) - i / 2 == 0)
-                // {
-                //     printf("lstsize = 0\n");
-                //     insertPos(&dirbuff, 1, total);
-                // }
-                // else
-
-                                // printf("lstsize: %d\n", ft_lstsize(dirbuff));
-                                // t_list *tmpdir = dirbuff;
-                                // while (tmpdir)
-                                // {
-                                //     t_list *c = tmpdir->content;
-                                //     if (ft_strcmp("\n", (char *)c->content) == 0)
-                                //         printf("content of dirbuff:space\n");
-                                //     else
-                                //         printf("content of dirbuff:%s\n", (char *)c->content);
-                                //     tmpdir = tmpdir->next;
-                                // }
-                                // t_list *last = ft_lstlast(dirbuff);
-
-                // if (ft_strcmp("\n", last->content) != 0)
-                //     insertPos(&dirbuff, ft_lstsize(dirbuff) - i / 2 + 1, total);
-                // else
-                insertPos(&dirbuff, ft_lstsize(dirbuff) - i / 2, total);
-
-                // ft_lstadd_front(&dirbuff, total);
-                free(dir);
-                free(itoa);
-                free(join);
-            }
-        }
-        ft_lstadd_back(&ls.buffers, dirbuff);
-
-            */
-        // if (!(options & R))
-        //    break;
         dir = dir->next;
     }
     display();
@@ -761,14 +653,13 @@ void listdir(char *name, char *from)
     DIR *dir;
     struct dirent *entry;
 
-    // printf("name %s\n", name);
+    //printf("name %s\n", name);
     if ((dir = opendir(name)) == NULL)
     {
         switch (errno)
         {
         case EACCES:
             break;
-            // printf("Permission denied\n");
         case ENOENT:
             printf("ls: cannot access '%s': %s\n", name, strerror(errno));
             break;
@@ -832,23 +723,41 @@ void listdir(char *name, char *from)
                 }
             }
             // printf("%*s[%s]\n", indent, "", entry->d_name);
-            // if (options & R)
-            listdir(path, "NULL");
+            //if (options & R)
+                listdir(path, "NULL");
         }
         else
         {
             char path[1024];
             snprintf(path, sizeof(path), "%s", name);
-            // printf("%s: - %s\n", path, entry->d_name);
-            t_dirs *curr = get_dir_w_path(path);
+            char *new;
+            t_dirs *curr;
+            if(path[0] !='.')
+            {
+                new = ft_strjoin("./", path);
+                curr = get_dir_w_path(new);
+                //if (curr)
+                //    printf("we are in %s adding %s as content\n", curr->dir_name, entry->d_name);
+                free(new);
+            }
+            else
+            {
+                curr = get_dir_w_path(path);
 
-            if (ft_strcmp("main", from) == 0)
+                //if (curr)
+                //    printf("we are in %s adding %s as content\n", curr->dir_name, entry->d_name);
+            }
+
+           // printf("%s: - %s\n", path, entry->d_name);
+
+            if (curr)
+                ft_lstadd_back(&curr->content, ft_lstnew(ft_strdup(entry->d_name)));
+            else if (ft_strcmp("main", from) == 0)
             {
                 ft_lstadd_back(&ls.dirs->content, ft_lstnew(ft_strdup(entry->d_name)));
                 // ft_lstadd_back(&ls.content, ft_lstnew(ft_strdup(entry->d_name)));
             }
-            else if (curr)
-                ft_lstadd_back(&curr->content, ft_lstnew(ft_strdup(entry->d_name)));
+
         }
     }
     closedir(dir);
@@ -878,12 +787,12 @@ void store_params(int ac, char **av)
         i++;
     }
 
-    /*
-        printf("--- ARGS ----\n");
-        print_list_str(ls.args);
-        printf("\n--- OPTS ---\n");
-        print_list_str(ls.opts);
-    */
+
+        // printf("--- ARGS ----\n");
+        // print_list_str(ls.args);
+        // printf("\n--- OPTS ---\n");
+        // print_list_str(ls.opts);
+
     if (ft_lstsize(ls.args) == 0)
         ft_lstadd_back(&ls.args, ft_lstnew(ft_strdup("./")));
 }
@@ -931,6 +840,7 @@ void ft_dirclear(t_dirs **lst, void (*del)(void *))
 
 int main(int ac, char *av[])
 {
+    tot = ac;
     store_params(ac, av);
     // printf("\n");
     for (t_list *tmp = ls.opts; tmp != NULL; tmp = tmp->next)
@@ -981,19 +891,20 @@ int main(int ac, char *av[])
         {
             while (tmp->display->content)
             {
-                // free(tmp->display);
+                char *t = (char *)tmp->display->content->content;
+                free(t);
                 t_list *ptr_next = tmp->display->content->next;
                 free(tmp->display->content);
                 tmp->display->content = NULL;
                 tmp->display->content = ptr_next;
             }
-            // ft_lstclear(&tmp->display->content, &free_list);
             if (tmp->display->location)
                 free(tmp->display->location);
             if (tmp->display->total_line)
                 free(tmp->display->total_line);
             if (tmp->display->content)
                 free(tmp->display->content);
+
         }
         free(tmp->display);
 

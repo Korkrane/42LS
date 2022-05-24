@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: clorin <clorin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bahaas <bahaas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/15 14:40:34 by clorin            #+#    #+#             */
-/*   Updated: 2021/05/05 15:00:48 by clorin           ###   ########.fr       */
+/*   Updated: 2022/05/24 10:48:50 by bahaas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,4 +106,7 @@ t_list			*ft_lstsplit(char const *s, char c);
 int				get_next_line(const int fd, char **line);
 char			*strjoin_gnl(char const *s1, char const *s2);
 size_t			ft_intlen(long long nb);
+
+char *ft_strlower(char *str);
+char *ft_strupper(char *str);
 #endif
