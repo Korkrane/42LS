@@ -432,7 +432,7 @@ void display()
     if (ls.dirs)
     {
         t_dirs *tmp = ls.dirs;
-
+        // printf("lol");
         int j = 0;
         int i = 0;
         while (tmp)
@@ -505,6 +505,7 @@ void output_to_buff()
     while (dir)
     {
         insertSort(&dir->content);
+        // printf("lol dir->name:%s\n", dir->dir_name);
         dir->display = malloc(sizeof(t_display) * 1);
         char *str = ft_strjoin(&dir->path[2], ":\n");
 
@@ -516,14 +517,102 @@ void output_to_buff()
         int padding = max_padding(tmp, dir->path);
         while (tmp)
         {
+            // printf("lol dir->content:%s\n", (char *)tmp->content);
             char *arg = (char *)tmp->content;
             if (arg[0] == '.' && !(options & a))
                 ;
             else
             {
+                // if (!(options & l))
+                // {
+                //     ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(arg)));
+
+                //     if (tmp->next)
+                //         ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(" ")));
+                //     else
+                //         ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
+                // }
+                // else
+                //{
+
+                char *init_path = ft_strjoin(dir->path, "/");
+                char *full_path = ft_strjoin(init_path, arg);
+                free(init_path);
+
+                // printf("full path: %s\n", full_path);
+                // printf("----------------\n");
+
+                struct stat mystat;
+                lstat(full_path, &mystat);
+                char details1[10000];
+                char *sd = "-";
+
+                char *buf = NULL;
+                ssize_t nbytes, bufsiz;
+
+                if (S_ISDIR(mystat.st_mode))
+                    sd = "d";
+                else if (S_ISLNK(mystat.st_mode))
+                {
+                    bufsiz = mystat.st_size;
+                    if (mystat.st_size == 0)
+                        bufsiz = PATH_MAX;
+
+                    buf = malloc(bufsiz);
+                    sd = "l";
+                    nbytes = readlink(full_path, buf, bufsiz);
+                }
+                sprintf(details1, "%s%s%s%s%s%s%s%s%s%s",
+                        sd,
+                        (mystat.st_mode & S_IRUSR) ? "r" : "-",
+                        (mystat.st_mode & S_IWUSR) ? "w" : "-",
+                        (mystat.st_mode & S_IXUSR) ? "x" : "-",
+                        (mystat.st_mode & S_IRGRP) ? "r" : "-",
+                        (mystat.st_mode & S_IWGRP) ? "w" : "-",
+                        (mystat.st_mode & S_IXGRP) ? "x" : "-",
+                        (mystat.st_mode & S_IROTH) ? "r" : "-",
+                        (mystat.st_mode & S_IWOTH) ? "w" : "-",
+                        (mystat.st_mode & S_IXOTH) ? "x" : "-");
+
+                char *date = ctime(&mystat.st_mtime);
+                char **trimmed_date = ft_split(date, ' ');
+                char *str1 = ft_add_char(ft_strdup(trimmed_date[1]), ' ');
+                char *str2 = ft_add_char(ft_strdup(trimmed_date[2]), ' ');
+                char *trim = ft_strjoin(str1, str2);
+                free(str1);
+                free(str2);
+                char *trim2 = ft_strjoin(trim, trimmed_date[3]);
+                free(trim);
+                free_split(&trimmed_date);
+                char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
+                free(trim2);
+                struct passwd *test = getpwuid(mystat.st_uid);
+                struct group *grp = getgrgid(mystat.st_gid);
+
+                char *color = "";
+                if (details1[0] == 'd')
+                    color = COLOR_BOLD_BLUE;
+                else if (details1[0] == 'l')
+                    color = COLOR_BOLD_RED;
+                else if (ft_strchr(details1, 'x'))
+                    color = COLOR_BOLD_GREEN;
+                char *restc = COLOR_RESET;
+                char details[10000];
+                if (buf)
+                {
+                    sprintf(details, " %ld %s %s %*ld %s %s%s%s -> %s%.*s%s\n", mystat.st_nlink, test->pw_name, grp->gr_name, padding, mystat.st_size, u, color, arg, restc, color, (int)nbytes, buf, restc);
+                    free(buf);
+                }
+                else
+                    sprintf(details, " %ld %s %s %*ld %s %s%s%s\n", mystat.st_nlink, test->pw_name, grp->gr_name, padding, mystat.st_size, u, color, arg, restc);
+
+                char *full_string = ft_strjoin(details1, details);
+
                 if (!(options & l))
                 {
-                    ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(arg)));
+                    char t[1000000];
+                    sprintf(t, "%s%s%s", color, arg, restc);
+                    ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(t)));
 
                     if (tmp->next)
                         ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(" ")));
@@ -531,87 +620,13 @@ void output_to_buff()
                         ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
                 }
                 else
-                {
-
-                    char *init_path = ft_strjoin(dir->path, "/");
-                    char *full_path = ft_strjoin(init_path, arg);
-                    free(init_path);
-
-                    // printf("full path: %s\n", full_path);
-                    // printf("----------------\n");
-
-                    struct stat mystat;
-                    lstat(full_path, &mystat);
-                    char details1[10000];
-                    char *sd = "-";
-
-                    char *buf = NULL;
-                    ssize_t nbytes, bufsiz;
-
-                    if (S_ISDIR(mystat.st_mode))
-                        sd = "d";
-                    else if (S_ISLNK(mystat.st_mode))
-                    {
-                        bufsiz = mystat.st_size;
-                        if (mystat.st_size == 0)
-                            bufsiz = PATH_MAX;
-
-                        buf = malloc(bufsiz);
-                        sd = "l";
-                        nbytes = readlink(full_path, buf, bufsiz);
-                    }
-                    sprintf(details1, "%s%s%s%s%s%s%s%s%s%s",
-                            sd,
-                            (mystat.st_mode & S_IRUSR) ? "r" : "-",
-                            (mystat.st_mode & S_IWUSR) ? "w" : "-",
-                            (mystat.st_mode & S_IXUSR) ? "x" : "-",
-                            (mystat.st_mode & S_IRGRP) ? "r" : "-",
-                            (mystat.st_mode & S_IWGRP) ? "w" : "-",
-                            (mystat.st_mode & S_IXGRP) ? "x" : "-",
-                            (mystat.st_mode & S_IROTH) ? "r" : "-",
-                            (mystat.st_mode & S_IWOTH) ? "w" : "-",
-                            (mystat.st_mode & S_IXOTH) ? "x" : "-");
-
-                    char *date = ctime(&mystat.st_mtime);
-                    char **trimmed_date = ft_split(date, ' ');
-                    char *str1 = ft_add_char(ft_strdup(trimmed_date[1]), ' ');
-                    char *str2 = ft_add_char(ft_strdup(trimmed_date[2]), ' ');
-                    char *trim = ft_strjoin(str1, str2);
-                    free(str1);
-                    free(str2);
-                    char *trim2 = ft_strjoin(trim, trimmed_date[3]);
-                    free(trim);
-                    free_split(&trimmed_date);
-                    char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
-                    free(trim2);
-                    struct passwd *test = getpwuid(mystat.st_uid);
-                    struct group *grp = getgrgid(mystat.st_gid);
-
-                    char *color = "";
-                    if (details1[0] == 'd')
-                        color = COLOR_BOLD_BLUE;
-                    else if (details1[0] == 'l')
-                        color = COLOR_BOLD_RED;
-                    else if (ft_strchr(details1, 'x'))
-                        color = COLOR_BOLD_GREEN;
-                    char *restc = COLOR_RESET;
-                    char details[10000];
-                    if (buf)
-                    {
-                        sprintf(details, " %ld %s %s %*ld %s %s%s%s -> %s%.*s%s\n", mystat.st_nlink, test->pw_name, grp->gr_name, padding, mystat.st_size, u, color, arg, restc, color, (int)nbytes, buf, restc);
-                        free(buf);
-                    }
-                    else
-                        sprintf(details, " %ld %s %s %*ld %s %s%s%s\n", mystat.st_nlink, test->pw_name, grp->gr_name, padding, mystat.st_size, u, color, arg, restc);
-
-                    char *full_string = ft_strjoin(details1, details);
                     ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(full_string)));
-                    free(full_string);
-                    // printf("full string: %s\n", full_string);
-                    dir->total_block += mystat.st_blocks / 2;
-                    free(full_path);
-                    free(u);
-                }
+                free(full_string);
+                // printf("full string: %s\n", full_string);
+                dir->total_block += mystat.st_blocks / 2;
+                free(full_path);
+                free(u);
+                //}
             }
             tmp = tmp->next;
             // if (!(options & R))
