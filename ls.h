@@ -24,11 +24,19 @@ typedef enum e_options
     t = 1 << 4
 } t_options;
 
+typedef struct s_lol
+{
+    char *date;
+    time_t date2;
+    void *content;
+    struct s_lol *next;
+} t_lol;
+
 typedef struct s_display
 {
     char *location;
     char *total_line;
-    t_list *content;
+    t_lol *content;
 } t_display;
 
 typedef struct s_list2
@@ -59,7 +67,6 @@ typedef struct s_ls
     t_dirs *dirs;
     t_list2 *content;
 } t_ls;
-
 
 void debug_print();
 

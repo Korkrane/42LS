@@ -6,7 +6,7 @@
 /*   By: bahaas <bahaas@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/15 14:40:34 by clorin            #+#    #+#             */
-/*   Updated: 2022/05/24 19:47:41 by bahaas           ###   ########.fr       */
+/*   Updated: 2022/05/30 16:59:15 by bahaas           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,4 +128,5 @@ size_t ft_intlen(long long nb);
 
 char *ft_strlower(char *str);
 char *ft_strupper(char *str);
+char *ft_strjoins(char **strs);
 #endif

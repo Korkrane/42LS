@@ -175,6 +175,97 @@ void insertSort2(t_list2 **head)
 
 // Function to insert a given node at its correct sorted position into a given
 // list sorted in increasing order
+void sortedInsertDate(t_lol **head, t_lol *newNode)
+{
+    t_lol dummy;
+    t_lol *current = &dummy;
+    dummy.next = *head;
+
+    char *lower1 = NULL;
+    char *lower2 = NULL;
+
+    while (current->next != NULL)
+    {
+        if (current->next->date2 == 0 || current->date2 == 0)
+        {
+            current = current->next;
+            continue;
+        }
+        if (current && current->next)
+        {
+            lower1 = (char *)current->next->content;
+            lower2 = (char *)newNode->content;
+            //  printf("compare (%s)%s && %s (%s)\n", (char *)current->next->content, lower1, lower2, (char *)current->content);
+            //   if (ft_strcmp(lower1, lower2) < 0)
+            // if (ft_strcmp(lower1, lower2) < 0)
+            if (current->next->date2 > newNode->date2)
+            {
+                current = current->next;
+            }
+            else
+            {
+                // if (current->next->date2 == newNode->date2 && ft_strcmp(lower1, lower2) < 0)
+                //     current = current->next;
+                break;
+            }
+        }
+        else
+            break;
+    }
+    newNode->next = current->next;
+    current->next = newNode;
+    *head = dummy.next;
+}
+
+void printlol(t_lol **head)
+{
+    t_lol *current = *head; // iterate over the original list
+    t_lol *next;
+    while (current != NULL)
+    {
+        // tricky: note the next pointer before we change it
+        char *arg = (char *)current->content;
+        if (arg[0] == '\n')
+            printf("\\n\n");
+        else if (arg[0] == ' ')
+            printf("space\n");
+        else if (arg)
+        {
+            if (!(options & l))
+                printf("date:%ld||| %s\n", current->date2, arg);
+            else
+                printf("date:%ld||| %s", current->date2, arg);
+        }
+        next = current->next;
+        current = next;
+    }
+}
+// Given a list, change it to be in sorted order (using `sortedInsert()`).
+void dateSort(t_lol **head)
+{
+    // printf("sort by date of acces\n");
+    t_lol *result = NULL;           // build the answer here
+    t_lol *current = (*head)->next; // iterate over the original list
+    t_lol *next;
+
+    printf("before:\n");
+    printlol(&current);
+    while (current != NULL)
+    {
+        // tricky: note the next pointer before we change it
+        next = current->next;
+
+        sortedInsertDate(&result, current);
+        current = next;
+    }
+
+    *head = result;
+    printf("after:\n");
+    printlol(head);
+}
+
+// Function to insert a given node at its correct sorted position into a given
+// list sorted in increasing order
 void sortedInsert(t_list **head, t_list *newNode)
 {
     t_list dummy;
@@ -398,6 +489,8 @@ void display()
                 free(str1);
                 free(str2);
                 char *trim2 = ft_strjoin(trim, trimmed_date[3]);
+                // char *arr[] = {str1, str2, trimmed_date[3]};
+                // char *trim3 = ft_strjoins(arr);
                 free(trim);
                 free_split(&trimmed_date);
                 char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
@@ -426,7 +519,8 @@ void display()
                 free(u);
             }
         }
-        printf("\n");
+        if (ls.dirs)
+            printf("\n");
     }
 
     if (ls.dirs)
@@ -446,7 +540,7 @@ void display()
                 // printf("j: %d\n", j);
                 if (tmp->display)
                 {
-                    t_list *arg_to_display = tmp->display->content;
+                    t_lol *arg_to_display = tmp->display->content;
 
                     if (ft_lstsize(ls.args) > 1 || (options & R))
                         printf("%s", tmp->display->location);
@@ -462,13 +556,24 @@ void display()
                         //    ;
                         else
                             printf("%s", (char *)arg_to_display->content);
+                        if (!(options & l))
+                        {
+                            if (arg_to_display->next)
+                                printf(" ");
+                            else
+                                printf("\n");
+                        }
                         arg_to_display = arg_to_display->next;
                     }
+                    // save last arg printed
+                    if (tmp->next)
+                        printf("\n");
                 }
             }
             i++;
             tmp = tmp->next;
         }
+        // si last arg printed not \n add one :) //TODO
     }
 }
 
@@ -498,6 +603,50 @@ int max_padding(t_list *t, char *path)
     return max;
 }
 
+t_lol *ft_lolnew(void *content, char *date, time_t date2)
+{
+    t_lol *new;
+
+    new = (t_lol *)malloc(sizeof(t_lol));
+    if (!new)
+        return (NULL);
+    new->content = content;
+    if (date)
+        new->date = date;
+    else
+        new->date = NULL;
+    if (date2)
+        new->date2 = date2;
+    else
+        new->date2 = 0;
+    new->next = NULL;
+    return (new);
+}
+
+t_lol *ft_lollast(t_lol *lst)
+{
+    if (!lst)
+        return (NULL);
+    while (lst->next)
+        lst = lst->next;
+    return (lst);
+}
+
+void ft_loladd_back(t_lol **alst, t_lol *new)
+{
+    t_lol *list;
+
+    if (!alst || !*alst)
+    {
+        *alst = new;
+    }
+    else
+    {
+        list = ft_lollast(*alst);
+        list->next = new;
+    }
+}
+
 void output_to_buff()
 {
     t_dirs *dir = ls.dirs;
@@ -510,8 +659,11 @@ void output_to_buff()
         char *str = ft_strjoin(&dir->path[2], ":\n");
 
         dir->display->location = str;
-        dir->display->content = ft_lstnew(ft_strdup("init\n"));
-        dir->display->total_line = NULL;
+        // dir->display->content = malloc(sizeof(t_lol) * 1);
+        // dir->display->content = NULL;
+        // dir->display->content = ft_lstnew(ft_strdup("init\n"));
+        dir->display->content = ft_lolnew(ft_strdup("init\n"), 0, 0);
+        // dir->display->total_line = NULL;
 
         t_list *tmp = dir->content;
         int padding = max_padding(tmp, dir->path);
@@ -575,6 +727,9 @@ void output_to_buff()
                         (mystat.st_mode & S_IXOTH) ? "x" : "-");
 
                 char *date = ctime(&mystat.st_mtime);
+                time_t date2 = mystat.st_mtime;
+                // ft_lstadd_back(&dir->display->content, ft_strdup(date));
+                // ft_loladd_back(&dir->display->date, ft_strdup(date));
                 char **trimmed_date = ft_split(date, ' ');
                 char *str1 = ft_add_char(ft_strdup(trimmed_date[1]), ' ');
                 char *str2 = ft_add_char(ft_strdup(trimmed_date[2]), ' ');
@@ -582,6 +737,8 @@ void output_to_buff()
                 free(str1);
                 free(str2);
                 char *trim2 = ft_strjoin(trim, trimmed_date[3]);
+                // char *arr[] = {str1, str2, trimmed_date[3]};
+                // char *trim3 = ft_strjoins(arr);
                 free(trim);
                 free_split(&trimmed_date);
                 char *u = ft_substr(trim2, 0, ft_strlen(trim2) - 3);
@@ -612,15 +769,33 @@ void output_to_buff()
                 {
                     char t[1000000];
                     sprintf(t, "%s%s%s", color, arg, restc);
-                    ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(t)));
-
-                    if (tmp->next)
-                        ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(" ")));
+                    // ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(t)));
+                    if (dir->display->content != NULL)
+                        ft_loladd_back(&dir->display->content, ft_lolnew(ft_strdup(t), 0, date2));
                     else
-                        ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
+                        dir->display->content = ft_lolnew(ft_strdup(t), 0, date2);
+
+                    // 55//if (tmp->next)
+                    // 55//    ft_loladd_back(&dir->display->content, ft_lolnew(ft_strdup(" "), 0, 0));
+                    //   ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(" ")));
+                    // 55//else
+                    // 55//ft_loladd_back(&dir->display->content, ft_lolnew(ft_strdup("\n"), 0, 0));
+                    // ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
                 }
                 else
-                    ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(full_string)));
+                {
+                    if (dir->display->content != NULL)
+                    {
+                        // printf("do not build the t_lol\n");
+                        ft_loladd_back(&dir->display->content, ft_lolnew(ft_strdup(full_string), date, date2));
+                    }
+                    else
+                    {
+                        printf("build the t_lol\n");
+                        dir->display->content = ft_lolnew(ft_strdup(full_string), date, date2);
+                    }
+                }
+                // ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup(full_string)));
                 free(full_string);
                 // printf("full string: %s\n", full_string);
                 dir->total_block += mystat.st_blocks / 2;
@@ -634,8 +809,9 @@ void output_to_buff()
         }
         if (!tmp)
         {
-            if (dir->next)
-                ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
+            // if (dir->next)
+            //     ft_loladd_back(&dir->display->content, ft_lolnew(ft_strdup("\n"), 0, 0));
+            //   ft_lstadd_back(&dir->display->content, ft_lstnew(ft_strdup("\n")));
 
             if ((options & l))
             {
@@ -648,6 +824,11 @@ void output_to_buff()
                 free(itoa);
                 free(join);
             }
+        }
+        if (options & t)
+        {
+            printf("sort by date %s\n", dir->dir_name);
+            dateSort(&dir->display->content);
         }
         dir = dir->next;
     }
@@ -907,7 +1088,7 @@ int main(int ac, char *av[])
             {
                 char *t = (char *)tmp->display->content->content;
                 free(t);
-                t_list *ptr_next = tmp->display->content->next;
+                t_lol *ptr_next = tmp->display->content->next;
                 free(tmp->display->content);
                 tmp->display->content = NULL;
                 tmp->display->content = ptr_next;

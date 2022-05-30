@@ -6,7 +6,7 @@
 #    By: bahaas <bahaas@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/09/15 14:40:58 by clorin            #+#    #+#              #
-#    Updated: 2022/05/24 10:47:54 by bahaas           ###   ########.fr        #
+#    Updated: 2022/05/30 17:06:46 by bahaas           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,7 +34,7 @@ SRCS		= ft_memset.c ft_bzero.c ft_memcpy.c ft_memccpy.c ft_memmove.c ft_memchr.c
 			ft_strclr.c ft_striter.c ft_striteri.c ft_strmap.c ft_lstsplit.c \
 			get_next_line.c get_next_line_utils.c ft_intlen.c ft_nsplit.c ft_add_char.c \
 			ft_add_str.c ft_is_nbr.c ft_is_empty.c \
-			ft_strlower.c ft_strupper.c
+			ft_strlower.c ft_strupper.c ft_strjoins.c
 
 OBJS		= ${SRCS:.c=.o}
 
